@@ -2,38 +2,28 @@
 FROM pritunl/archlinux:latest
 MAINTAINER ppickfor
 
-# additional files
-##################
-
 # install packer
 ################
 
 # install base devel, install app using packer, set perms, cleanup
 ENV TERM xterm
 
-RUN	pacman -S --needed base-devel git supervisor postfix --noconfirm && \
-	useradd -m -g wheel -s /bin/bash makepkg-user && \
-	echo -e "makepkg-password\nmakepkg-password" | passwd makepkg-user && \
-	echo "%wheel      ALL=(ALL) ALL" >> /etc/sudoers && \
-	echo "Defaults:makepkg-user      !authenticate" >> /etc/sudoers
-RUN	cd /home/makepkg-user && \
-	for d in perl-xml-mini perl-audio-dsp perl-modem-vgetty ;do \
-		su -c " git clone https://aur.archlinux.org/${d}.git && cd /home/makepkg-user/$d && makepkg -s --noconfirm --needed" - makepkg-user && \
-		pacman -U --noconfirm --force $d/${d}*.pkg.tar.xz || exit 1; \
-	done
-RUN	cd /home/makepkg-user && \
-	for d in mgetty-vgetty;do \
-		su -c " git clone https://aur.archlinux.org/${d}.git && cd /home/makepkg-user/$d && makepkg -s --noconfirm --needed" - makepkg-user && \
-		pacman -U --noconfirm --force $d/${d}*.pkg.tar.xz || exit 1; \
-	done
-RUN	cd /home/makepkg-user && \
-	for d in  vocp;do \
-		su -c " git clone https://aur.archlinux.org/${d}.git && cd /home/makepkg-user/$d && makepkg -s --noconfirm --needed" - makepkg-user && \
-		pacman -U --noconfirm --force $d/${d}*.pkg.tar.xz || exit 1; \
-	done
-RUN	pacman -Ru $(pacman -Qqg base-devel |grep -v pacman) git --noconfirm ; \
+RUN	set -e ; \
+	pacman -S --needed base-devel git supervisor postfix --noconfirm ; \
+	useradd -m -g wheel -s /bin/bash makepkg-user ; \
+	echo -e "makepkg-password\nmakepkg-password" | passwd makepkg-user ; \
+	echo "%wheel      ALL=(ALL) ALL" >> /etc/sudoers ; \
+	echo "Defaults:makepkg-user      !authenticate" >> /etc/sudoers ; \
+	groupadd voice ; \
+	cd /home/makepkg-user ; \
+	for d in perl-xml-mini perl-audio-dsp perl-modem-vgetty mgetty-vgetty vocp ;do \
+		su -c " git clone --depth 1 https://aur.archlinux.org/${d}.git ; cd /home/makepkg-user/$d ; makepkg -s --noconfirm --needed" - makepkg-user ; \
+		pacman -U --noconfirm --force $d/${d}*.pkg.tar.xz ; \
+	done ; \
+	pacman -Ru $(pacman -Qqg base-devel |grep -Ev 'sed|pacman') git --noconfirm ; \
 	yes|pacman -Scc ; \
 	userdel -r makepkg-user ; \
+	set +e ; \
 	rm -rf /usr/share/locale/* ; \
 	rm -rf /usr/share/man/* ; \
 	rm -rf /root/* ; \
@@ -43,15 +33,18 @@ RUN	pacman -Ru $(pacman -Qqg base-devel |grep -v pacman) git --noconfirm ; \
 # docker settings
 #################
 
-# map /config to host defined config path (used to store configuration from app)
+#externalize main configuration and data
 VOLUME /var/spool/voice
 VOLUME /etc/vocp
 VOLUME /etc/mgetty+sendfax
 
+# additional files
+##################
+ADD ./app/ /app/
+
 # run supervisor
 ################
 
-ADD ./app/ /app/
 RUN chmod +x /app/entrypoint
 
 WORKDIR /app/
