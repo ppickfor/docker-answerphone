@@ -20,7 +20,7 @@ RUN	set -e ; \
 		su -c " git clone --depth 1 https://aur.archlinux.org/${d}.git ; cd /home/makepkg-user/$d ; makepkg -s --noconfirm --needed" - makepkg-user ; \
 		pacman -U --noconfirm --force $d/${d}*.pkg.tar.xz ; \
 	done ; \
-	pacman -Ru $(pacman -Qqg base-devel |grep -Ev 'sed|pacman') git --noconfirm ; \
+	pacman -Ru $(pacman -Qqg base-devel |grep -Ev 'sed|grep|pacman') git --noconfirm ; \
 	yes|pacman -Scc ; \
 	userdel -r makepkg-user ; \
 	set +e ; \
