@@ -1,0 +1,108 @@
+#! /usr/bin/env bash
+
+set -e
+
+function set_env {
+
+	# optional environment variables
+	DEBUG=${DEBUG:-false}
+	DOMAIN=${DOMAIN:-}
+	HOSTNAME=${HOSTNAME:-}
+	IP_ADDR=${IP_ADDR:-$(ip addr | grep inet | grep eth0 | awk '{print $2}' | cut -d '/' -f 1)}
+	SUPERVISOR_PASSWORD=${SUPERVISOR_PASSWORD:-}
+
+}
+
+function check_validity {
+	invalid_variables=()
+
+	# environment variables that must be 'true' or 'false'
+	if [ ${DEBUG} != 'true' ] && [ ${DEBUG} != 'false' ]; then
+		invalid_variables+=("DEBUG: must be 'true' or 'false'")
+	fi
+
+	# environment variables that must be 'yes' or 'no'
+	if [ ${SSL} != 'yes' ] && [ ${SSL} != 'no' ]; then
+		invalid_variables+=("SSL: must be 'yes' or 'no'")
+	fi
+
+	if [ ${#invalid_variables[@]} -ne 0 ]; then
+
+		echo "The following environment variables are of an invalid form:"
+		for ((i = 0; i < ${#invalid_variables[@]}; i++))
+		do
+			echo -e "\t${invalid_variables[$i]}"
+		done
+
+		exit 1
+	fi
+}
+
+function check_requirements {
+	missing_requirements=()
+
+
+	if [ ${#missing_requirements[@]} -ne 0 ]; then
+
+		echo "The following environment variables are required but were not found:"
+		for ((i = 0; i < ${#missing_requirements[@]}; i++))
+		do
+			echo -e "\t${missing_requirements[$i]}"
+		done
+
+		exit 1
+	fi
+}
+
+function prepare_templates {
+	cp -Rv /app/etc/* /etc/
+}
+
+function set_log_level {
+	:
+
+}
+
+function set_configs {
+	:
+}
+
+function run {
+
+	# set the environment variables
+	set_env
+
+	# exit if the environment varaibles are not valid options
+	check_validity
+
+	# exit if the required environment variables were not specified
+	#check_requirements
+
+	# copy the templates
+	prepare_templates
+
+	# set the level of logging
+	set_log_level
+
+	# set the environment variables in the cofig files
+	set_configs
+
+	exec supervisord -c /etc/supervisord.conf
+
+	exit 0
+}
+
+mkdir /run/lock
+
+case "$1" in
+	run )
+		run
+		;;
+	debug )
+		set -x
+		run
+		;;
+	* )
+		exec "$@"
+		;;
+esac

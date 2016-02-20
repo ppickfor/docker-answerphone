@@ -1,0 +1,2 @@
+#!/bin/bash
+docker run -d  --name answerphone  -h answerphone --net static --device=/dev/ttyACM0:/dev/ttyACM0 -v /etc/localtime:/etc/localtime -v /opt/answerphone/etc/mgetty+sendfax:/etc/mgetty+sendfax -v /opt/answerphone/etc/vocp:/etc/vocp -v /opt/answerphone/var/spool/voice/incoming:/var/spool/voice/incoming -v /opt/answerphone/var/spool/voice/messages:/var/spool/voice/messages -v /opt/answerphone/var/log:/var/log ppickfor/answerphone
