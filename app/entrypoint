@@ -87,12 +87,12 @@ function run {
 	# set the environment variables in the cofig files
 	set_configs
 
-	exec supervisord -c /etc/supervisord.conf
+	exec supervisord -c /etc/supervisord.conf -n
 
 	exit 0
 }
 
-mkdir /run/lock
+[ -d /run/lock ] || mkdir /run/lock
 
 case "$1" in
 	run )
