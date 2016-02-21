@@ -16,7 +16,7 @@ RUN	set -e ; \
 	echo "Defaults:makepkg-user      !authenticate" >> /etc/sudoers ; \
 	groupadd voice ; \
 	cd /home/makepkg-user ; \
-	for d in perl-xml-mini perl-audio-dsp perl-modem-vgetty mgetty-vgetty vocp ;do \
+	for d in perl-xml-mini perl-audio-dsp perl-modem-vgetty mgetty-vgetty vocp-git ;do \
 		su -c " git clone --depth 1 https://aur.archlinux.org/${d}.git ; cd /home/makepkg-user/$d ; makepkg -s --noconfirm --needed" - makepkg-user ; \
 		pacman -U --noconfirm --force $d/${d}*.pkg.tar.xz ; \
 	done ; \
